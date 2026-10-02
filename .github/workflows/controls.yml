@@ -44,14 +44,10 @@ jobs:
       - name: Initialise bronze + audit schema
         run: |
           python - <<'EOF'
-          from pipeline.db import get_engine
-          from sqlalchemy import text
-          with open("sql/01_create_schemas.sql") as f:
-              sql = f.read()
+          from pathlib import Path
+          from pipeline.db import get_engine, run_sql_file
           engine = get_engine()
-          with engine.connect() as conn:
-              conn.execute(text(sql))
-              conn.commit()
+          run_sql_file(engine, Path("sql/01_create_schemas.sql"))
           print("Schema initialised OK")
           EOF
 
