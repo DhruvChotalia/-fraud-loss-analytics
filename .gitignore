@@ -1,0 +1,24 @@
+# data never goes to GitHub — CSVs are too large and may contain PII
+data/*
+!data/.gitkeep
+
+# secrets and environment
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

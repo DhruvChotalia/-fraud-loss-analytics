@@ -1,0 +1,186 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "description": "Azure Data Factory pipeline: land raw fraud CSVs from Blob Storage into ADLS Gen2 for Databricks ingestion. Validates file existence, copies with lineage metadata, and triggers the Databricks silver notebook on success.",
+  "pipeline": {
+    "name": "pl_fraud_ingest_daily",
+    "properties": {
+      "description": "Daily ingestion of fraud transaction CSVs from source Blob into the bronze zone of ADLS Gen2. Runs at 02:00 UTC (before business hours). Fails fast on missing file so downstream jobs are never triggered on stale data.",
+      "activities": [
+        {
+          "name": "act_validate_source_file",
+          "type": "Validation",
+          "description": "Verify the source file landed in Blob Storage before attempting the copy. Waits up to 30 minutes with a 60-second retry interval. Pipeline fails if file does not arrive — downstream jobs are never triggered on a missing file.",
+          "typeProperties": {
+            "dataset": {
+              "referenceName": "ds_blob_fraud_csv",
+              "type": "DatasetReference"
+            },
+            "timeout": "0.00:30:00",
+            "sleep": 60,
+            "minimumSize": 1024
+          }
+        },
+        {
+          "name": "act_copy_to_adls",
+          "type": "Copy",
+          "description": "Copy the validated CSV from Blob Storage into the bronze zone of ADLS Gen2. Preserves the original file exactly — no transformation at this stage (same philosophy as the PostgreSQL bronze layer).",
+          "dependsOn": [
+            {
+              "activity": "act_validate_source_file",
+              "dependencyConditions": ["Succeeded"]
+            }
+          ],
+          "typeProperties": {
+            "source": {
+              "type": "DelimitedTextSource",
+              "storeSettings": {
+                "type": "AzureBlobStorageReadSettings",
+                "recursive": false
+              },
+              "formatSettings": {
+                "type": "DelimitedTextReadSettings"
+              }
+            },
+            "sink": {
+              "type": "DelimitedTextSink",
+              "storeSettings": {
+                "type": "AzureBlobFSWriteSettings"
+              },
+              "formatSettings": {
+                "type": "DelimitedTextWriteSettings",
+                "quoteAllText": false,
+                "fileExtension": ".csv"
+              }
+            },
+            "enableStaging": false
+          },
+          "inputs": [
+            {
+              "referenceName": "ds_blob_fraud_csv",
+              "type": "DatasetReference"
+            }
+          ],
+          "outputs": [
+            {
+              "referenceName": "ds_adls_bronze_fraud",
+              "type": "DatasetReference"
+            }
+          ]
+        },
+        {
+          "name": "act_log_control_result",
+          "type": "Copy",
+          "description": "Write a control record (file name, row count from copy activity output, load timestamp) to the audit table in Azure SQL Database. Mirrors the audit.etl_run_log pattern from the PostgreSQL bronze layer.",
+          "dependsOn": [
+            {
+              "activity": "act_copy_to_adls",
+              "dependencyConditions": ["Succeeded"]
+            }
+          ],
+          "typeProperties": {
+            "source": {
+              "type": "AzureSqlSource",
+              "sqlReaderQuery": {
+                "value": "SELECT '@{pipeline().RunId}' AS run_id, '@{pipeline().parameters.source_file}' AS source_file, @{activity('act_copy_to_adls').output.rowsRead} AS rows_read, @{activity('act_copy_to_adls').output.rowsCopied} AS rows_copied, GETUTCDATE() AS loaded_at, 'SUCCEEDED' AS status",
+                "type": "Expression"
+              }
+            },
+            "sink": {
+              "type": "AzureSqlSink",
+              "writeBehavior": "insert",
+              "sqlWriterUseTableLock": false
+            }
+          },
+          "inputs": [{ "referenceName": "ds_sql_dummy_source", "type": "DatasetReference" }],
+          "outputs": [{ "referenceName": "ds_sql_audit_log", "type": "DatasetReference" }]
+        },
+        {
+          "name": "act_trigger_databricks_silver",
+          "type": "DatabricksNotebook",
+          "description": "Trigger the Databricks silver notebook once the file is confirmed in ADLS. Passes the ADLS path as a parameter so the notebook reads the correct file.",
+          "dependsOn": [
+            {
+              "activity": "act_log_control_result",
+              "dependencyConditions": ["Succeeded"]
+            }
+          ],
+          "typeProperties": {
+            "notebookPath": "/Shared/fraud-analytics/02_silver",
+            "baseParameters": {
+              "adls_path": {
+                "value": "@concat('abfss://bronze@', pipeline().parameters.adls_account, '.dfs.core.windows.net/fraud/', pipeline().parameters.source_file)",
+                "type": "Expression"
+              },
+              "run_id": {
+                "value": "@pipeline().RunId",
+                "type": "Expression"
+              }
+            }
+          },
+          "linkedServiceName": {
+            "referenceName": "ls_databricks",
+            "type": "LinkedServiceReference"
+          }
+        }
+      ],
+      "parameters": {
+        "source_file": {
+          "type": "String",
+          "defaultValue": "fraudTrain.csv"
+        },
+        "adls_account": {
+          "type": "String",
+          "defaultValue": "fraudstorage"
+        }
+      },
+      "trigger": {
+        "name": "tr_daily_0200_utc",
+        "type": "ScheduleTrigger",
+        "typeProperties": {
+          "recurrence": {
+            "frequency": "Day",
+            "interval": 1,
+            "startTime": "2024-01-01T02:00:00Z",
+            "timeZone": "UTC"
+          }
+        }
+      }
+    }
+  },
+  "linkedServices": {
+    "ls_blob_source": {
+      "type": "AzureBlobStorage",
+      "description": "Source: where the upstream system drops the daily CSV file"
+    },
+    "ls_adls_bronze": {
+      "type": "AzureBlobFS",
+      "description": "Sink: ADLS Gen2 bronze zone — raw files land here, Databricks reads from here"
+    },
+    "ls_azure_sql_audit": {
+      "type": "AzureSqlDatabase",
+      "description": "Audit database — same schema as the PostgreSQL audit layer (etl_run_log)"
+    },
+    "ls_databricks": {
+      "type": "AzureDatabricks",
+      "description": "Databricks workspace — ADF triggers the silver notebook after a successful copy"
+    }
+  },
+  "datasets": {
+    "ds_blob_fraud_csv": {
+      "type": "DelimitedText",
+      "linkedServiceName": "ls_blob_source",
+      "description": "Source CSV in Blob Storage"
+    },
+    "ds_adls_bronze_fraud": {
+      "type": "DelimitedText",
+      "linkedServiceName": "ls_adls_bronze",
+      "description": "Landing zone in ADLS Gen2 bronze container"
+    },
+    "ds_sql_audit_log": {
+      "type": "AzureSqlTable",
+      "linkedServiceName": "ls_azure_sql_audit",
+      "description": "audit.etl_run_log in Azure SQL Database"
+    }
+  }
+}

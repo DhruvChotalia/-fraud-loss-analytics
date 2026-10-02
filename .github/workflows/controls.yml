@@ -1,0 +1,75 @@
+name: DQ Controls Gate
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  controls:
+    name: Data-Quality Controls
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: fraud
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/fraud
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Initialise bronze + audit schema
+        run: |
+          python - <<'EOF'
+          from pipeline.db import get_engine
+          from sqlalchemy import text
+          with open("sql/01_create_schemas.sql") as f:
+              sql = f.read()
+          engine = get_engine()
+          with engine.connect() as conn:
+              conn.execute(text(sql))
+              conn.commit()
+          print("Schema initialised OK")
+          EOF
+
+      - name: Generate sample data
+        run: python tests/make_sample.py
+
+      # ── Test 1: clean data must pass all controls (exit 0) ────────────
+      - name: "[PASS expected] Clean sample — all controls green"
+        run: python run_week1.py --files data/sample_clean.csv --skip-profile
+
+      # ── Test 2: dirty data must be caught by DQ rules (exit 1) ────────
+      - name: "[FAIL expected] Dirty sample — defects must be caught"
+        run: |
+          python run_week1.py --files data/sample_dirty.csv --skip-profile
+          EXIT=$?
+          if [ $EXIT -eq 1 ]; then
+            echo "PASS: dirty data correctly rejected with exit code 1"
+          else
+            echo "FAIL: dirty data was not rejected — DQ controls broken"
+            exit 1
+          fi
