@@ -423,7 +423,7 @@ print(f"\nAll reports saved to ADLS Gen2 reports/ container.")
 
 import mlflow
 
-mlflow.set_experiment("/fraud-analytics/llm-analyst")
+mlflow.set_experiment("/Users/dhruvextra76@gmail.com/llm-analyst")
 
 with mlflow.start_run(run_name="LLM_fraud_analyst_v1"):
 

@@ -399,7 +399,7 @@ print("models/shap/shap_waterfall_single.png")
 import mlflow
 
 # Set the same experiment as notebook 05
-mlflow.set_experiment("/fraud-analytics/fraud-model")
+mlflow.set_experiment("/Users/dhruvextra76@gmail.com/fraud-model")
 
 with mlflow.start_run(run_name="GBT_shap_explainability"):
 

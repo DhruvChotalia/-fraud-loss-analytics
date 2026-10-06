@@ -313,7 +313,7 @@ import mlflow
 import mlflow.spark
 
 # Name the experiment — one experiment per project, one run per training session
-mlflow.set_experiment("/fraud-analytics/fraud-model")
+mlflow.set_experiment("/Users/dhruvextra76@gmail.com/fraud-model")
 
 default_threshold = 0.50
 default_row = cost_df[cost_df["threshold"] == default_threshold]
