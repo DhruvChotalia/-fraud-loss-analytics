@@ -15,7 +15,7 @@ are the differentiator, so never remove or weaken them.
 - Windows machine, PostgreSQL 17 local, Python venv in .venv.
 
 ## Roadmap
-Week 1: bronze load + controls ✓ → Week 2: Databricks silver/gold in PySpark ✓ → Week 3: Azure Data Factory, fraud KPIs, K-Means merchants ✓ → Week 4: XGBoost with cost-based threshold, SARIMA vs Holt-Winters forecast ✓ → Week 5: Power BI dashboard (10 visuals) ✓ → Week 6: executive memo + architecture diagram ✓ → Week 7: SHAP explainability + MLflow tracking ✓ → Week 8: LLM integration (AI fraud analyst) ✓ → Week 9: dbt gold layer ✓ → Week 10: Champion/Challenger A/B ✓ → Week 11: Isolation Forest anomaly detection (next).
+Week 1: bronze load + controls ✓ → Week 2: Databricks silver/gold in PySpark ✓ → Week 3: Azure Data Factory, fraud KPIs, K-Means merchants ✓ → Week 4: XGBoost with cost-based threshold, SARIMA vs Holt-Winters forecast ✓ → Week 5: Power BI dashboard (10 visuals) ✓ → Week 6: executive memo + architecture diagram ✓ → Week 7: SHAP explainability + MLflow tracking ✓ → Week 8: LLM integration (AI fraud analyst) ✓ → Week 9: dbt gold layer ✓ → Week 10: Champion/Challenger A/B ✓ → Week 11: Isolation Forest anomaly detection ✓ → Week 12: RFM cardholder segmentation (next).
 
 ## Setup
 
