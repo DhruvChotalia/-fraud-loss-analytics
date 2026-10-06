@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: fraud_by_category
+    description: "Fraud KPIs aggregated by merchant category. Primary source for category-level risk analysis."
+    columns:
+      - name: category
+        description: "Merchant category."
+        tests:
+          - not_null
+          - unique
+      - name: fraud_rate_pct
+        description: "Fraud rate as a percentage."
+        tests:
+          - not_null
+      - name: total_fraud_losses
+        description: "Total dollar losses from fraud transactions."
+        tests:
+          - not_null
+
+  - name: fraud_by_hour
+    description: "Fraud KPIs aggregated by hour of day. Shows the 22:00-23:00 high-risk window."
+    columns:
+      - name: hour_of_day
+        description: "Hour of day (0-23)."
+        tests:
+          - not_null
+          - unique
+      - name: fraud_rate_pct
+        description: "Fraud rate as a percentage for this hour."
+        tests:
+          - not_null
+
+  - name: fraud_monthly_trend
+    description: "Monthly fraud loss trend with MoM change and rolling 3-month average. Feeds the Holt-Winters forecast."
+    columns:
+      - name: year_month
+        description: "ISO year-month string (e.g. 2019-01)."
+        tests:
+          - not_null
+          - unique
+      - name: total_fraud_losses
+        description: "Total fraud losses for the month."
+        tests:
+          - not_null

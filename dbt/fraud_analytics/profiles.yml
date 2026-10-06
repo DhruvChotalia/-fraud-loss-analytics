@@ -1,0 +1,12 @@
+fraud_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: postgres
+      password: "{{ env_var('PGPASSWORD') }}"
+      dbname: fraud
+      schema: public
+      threads: 4

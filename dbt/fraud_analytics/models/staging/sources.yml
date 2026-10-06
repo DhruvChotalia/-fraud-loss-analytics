@@ -1,0 +1,25 @@
+version: 2
+
+sources:
+  - name: bronze
+    schema: bronze
+    description: "Raw landing layer — all values stored as TEXT, no type coercion on load."
+    tables:
+      - name: transactions_raw
+        description: "One row per source transaction, exactly as received from the Kaggle CSV."
+        columns:
+          - name: trans_num
+            description: "Unique transaction identifier."
+            tests:
+              - not_null
+          - name: amt
+            description: "Transaction amount as TEXT — cast to numeric in staging."
+            tests:
+              - not_null
+          - name: is_fraud
+            description: "Fraud flag as TEXT ('0' or '1')."
+            tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: ["0", "1"]
