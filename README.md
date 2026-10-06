@@ -88,3 +88,4 @@ tests/      sample-data generator for testing the controls
 - [x] Week 7 — SHAP explainability (notebooks/07_explainability.py): global feature importance, beeswarm summary, single-transaction waterfall; MLflow experiment tracking on all model runs
 - [x] Week 8 — LLM integration (notebooks/08_llm_analyst.py): AI fraud analyst with weekly brief generator, transaction explainer, and anomaly alert using Claude API
 - [x] Week 9 — dbt gold layer (dbt/fraud_analytics/): staging + 3 mart models, 14 data tests passing (not_null, unique, accepted_values)
+- [x] Week 10 — Champion/Challenger A/B framework (notebooks/10_champion_challenger.py): 60/20/20 split, normalised cost comparison, promotion decision with MLflow audit trail
