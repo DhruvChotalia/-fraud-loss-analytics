@@ -91,3 +91,4 @@ tests/      sample-data generator for testing the controls
 - [x] Week 10 — Champion/Challenger A/B framework (notebooks/10_champion_challenger.py): 60/20/20 split, normalised cost comparison, promotion decision with MLflow audit trail
 - [x] Week 11 — Isolation Forest anomaly detection (notebooks/11_isolation_forest.py): unsupervised anomaly layer, GBT blind spot analysis, score distribution plots
 - [x] Week 12 — RFM cardholder segmentation (notebooks/12_rfm_segmentation.py): Recency/Frequency/Monetary quintile scoring, 9 cardholder segments, fraud rate overlay by segment, MLflow tracking
+- [x] Week 13 — Causal inference (notebooks/13_causal_inference.py): Propensity Score Matching isolates causal effect of night-time transactions on fraud, bootstrap 95% CI on ATE, covariate balance diagnostics
