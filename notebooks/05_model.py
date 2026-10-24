@@ -251,6 +251,45 @@ print(f"  False declines: {optimal['false_declines']:.0f}")
 print(f"  Total cost at this threshold: ${optimal['total_cost']:,.2f}")
 print(f"  Precision: {optimal['precision']:.1%}")
 
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Confusion Matrix & AUC
+
+# COMMAND ----------
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Compute confusion matrix values at optimal threshold
+predicted = (preds_pd["fraud_prob"] >= OPTIMAL_THRESHOLD).astype(int)
+TP = int(((predicted == 1) & (preds_pd["is_fraud"] == 1)).sum())
+FP = int(((predicted == 1) & (preds_pd["is_fraud"] == 0)).sum())
+FN = int(((predicted == 0) & (preds_pd["is_fraud"] == 1)).sum())
+TN = int(((predicted == 0) & (preds_pd["is_fraud"] == 0)).sum())
+
+cm = np.array([[TP, FP], [FN, TN]])
+labels = [["True Positive\n(Caught Fraud)", "False Positive\n(False Decline)"],
+          ["False Negative\n(Missed Fraud)", "True Negative\n(Correct Legit)"]]
+
+fig, ax = plt.subplots(figsize=(7, 5))
+im = ax.imshow(cm, cmap="Blues")
+
+ax.set_xticks([0, 1]); ax.set_xticklabels(["Predicted Fraud", "Predicted Legit"], fontsize=11)
+ax.set_yticks([0, 1]); ax.set_yticklabels(["Actual Fraud", "Actual Legit"], fontsize=11)
+ax.xaxis.set_label_position("top"); ax.xaxis.tick_top()
+
+for i in range(2):
+    for j in range(2):
+        color = "white" if cm[i, j] > cm.max() * 0.5 else "black"
+        ax.text(j, i, f"{labels[i][j]}\n{cm[i, j]:,}",
+                ha="center", va="center", fontsize=10, color=color, fontweight="bold")
+
+ax.set_title(f"Confusion Matrix — GBT at Threshold {OPTIMAL_THRESHOLD}\nAUC-ROC: {auc:.4f}", fontsize=12, fontweight="bold", pad=20)
+plt.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+plt.tight_layout()
+plt.show()
+
 # Apply the threshold
 predictions_final = predictions.withColumn(
     "predicted_fraud",
