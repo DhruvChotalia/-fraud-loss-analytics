@@ -207,6 +207,36 @@ print(cost_df.to_string(index=False))
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ### Cost vs Threshold Plot
+
+# COMMAND ----------
+
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(9, 5))
+ax.plot(cost_df["threshold"], cost_df["total_cost"],
+        marker="o", color="#1f497d", linewidth=2, markersize=5, label="Total cost")
+
+opt = cost_df.loc[cost_df["total_cost"].idxmin()]
+ax.scatter(opt["threshold"], opt["total_cost"],
+           color="#e63946", s=160, zorder=5,
+           label=f'Optimal threshold: {opt["threshold"]}  (${opt["total_cost"]:,.0f})')
+ax.axvline(opt["threshold"], color="#e63946", linestyle="--", alpha=0.5)
+ax.annotate(f'  threshold={opt["threshold"]}', xy=(opt["threshold"], opt["total_cost"]),
+            xytext=(opt["threshold"] + 0.04, opt["total_cost"] * 1.05), fontsize=9, color="#e63946")
+
+ax.set_xlabel("Decision Threshold", fontsize=12)
+ax.set_ylabel("Total Cost ($)", fontsize=12)
+ax.set_title("Cost vs Decision Threshold — GBT Fraud Model\n(FN × $530 + FP × $25)", fontsize=12, fontweight="bold")
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"${x:,.0f}"))
+ax.legend(fontsize=10)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC ## 6. Apply optimal threshold
 
 # COMMAND ----------

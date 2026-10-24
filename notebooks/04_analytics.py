@@ -276,6 +276,37 @@ cluster_profiles.show()
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ### Step 5b — Cluster scatter plot: Fraud Rate vs Avg Fraud Ticket
+
+# COMMAND ----------
+
+import matplotlib.pyplot as plt
+
+profiles_pd = cluster_profiles.toPandas()
+colors = ["#e63946", "#f4a261", "#2a9d8f", "#457b9d", "#6a4c93"]
+
+fig, ax = plt.subplots(figsize=(9, 5))
+for i, row in profiles_pd.iterrows():
+    ax.scatter(
+        row["avg_fraud_ticket"],
+        row["avg_fraud_rate_pct"],
+        s=max(row["merchant_count"] * 25, 80),
+        color=colors[i % len(colors)],
+        label=f'Cluster {int(row["prediction"])}  ({int(row["merchant_count"])} merchants)',
+        alpha=0.85, edgecolors="white", linewidth=0.8, zorder=3
+    )
+
+ax.set_xlabel("Avg Fraud Ticket ($)", fontsize=12)
+ax.set_ylabel("Avg Fraud Rate (%)", fontsize=12)
+ax.set_title("K-Means Merchant Clusters — Fraud Rate vs Avg Fraud Ticket\n(bubble size = merchant count)", fontsize=12, fontweight="bold")
+ax.legend(fontsize=9, title="Cluster")
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC ### Step 6 — Label and save clusters
 
 # COMMAND ----------

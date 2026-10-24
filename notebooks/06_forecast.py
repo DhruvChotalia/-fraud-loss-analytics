@@ -161,6 +161,38 @@ print(f"\nLower MAPE wins → {winner} is the better model on this data.")
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ### Forecast Plot — Actual vs SARIMA vs Holt-Winters
+
+# COMMAND ----------
+
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(figsize=(11, 5))
+
+ax.plot(train_ts.index.to_timestamp(), train_ts.values,
+        color="#1f497d", linewidth=2, label="Actual (train)")
+ax.plot(test_ts.index.to_timestamp(), test_ts.values,
+        color="#1f497d", linewidth=2, linestyle="--", label="Actual (test)")
+ax.plot(sarima_forecast.index.to_timestamp(), sarima_forecast.values,
+        color="#e63946", linewidth=2, marker="o", markersize=5,
+        label=f"SARIMA  (MAPE {sarima_mape:.1f}%)")
+ax.plot(hw_forecast.index.to_timestamp(), hw_forecast.values,
+        color="#f4a261", linewidth=2, marker="s", markersize=5,
+        label=f"Holt-Winters  (MAPE {hw_mape:.1f}%)")
+
+ax.axvline(test_ts.index[0].to_timestamp(), color="gray", linestyle=":", alpha=0.6, label="Train / Test split")
+ax.set_xlabel("Month", fontsize=12)
+ax.set_ylabel("Monthly Fraud Losses ($)", fontsize=12)
+ax.set_title("Fraud Loss Forecast — SARIMA vs Holt-Winters", fontsize=13, fontweight="bold")
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"${x:,.0f}"))
+ax.legend(fontsize=10)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC ## 6. Forecast next 6 months beyond the data
 # MAGIC
 # MAGIC Refit the winning model on the full 24-month series, then forecast Jan–Jun 2021.

@@ -243,6 +243,48 @@ for _, row in norm_df[norm_df["variant"] != "champion"].iterrows():
 # COMMAND ----------
 
 # MAGIC %md
+# MAGIC ### Champion vs Challenger — Visual Comparison
+
+# COMMAND ----------
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+variants   = norm_df["variant"].tolist()
+x          = np.arange(len(variants))
+bar_colors = ["#1f497d", "#f4a261", "#e63946"]
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
+
+# Left panel: normalised total cost (lower = better)
+bars1 = ax1.bar(x, norm_df["normalised_total_cost"], color=bar_colors, width=0.5, edgecolor="white")
+ax1.set_xticks(x); ax1.set_xticklabels(variants, fontsize=11)
+ax1.set_ylabel("Total Cost per 10,000 transactions ($)", fontsize=10)
+ax1.set_title("Normalised Total Cost\n(lower is better)", fontsize=11, fontweight="bold")
+ax1.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"${v:,.0f}"))
+ax1.grid(axis="y", alpha=0.3)
+for bar in bars1:
+    ax1.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 30,
+             f'${bar.get_height():,.0f}', ha="center", va="bottom", fontsize=9, fontweight="bold")
+
+# Right panel: recall (higher = better)
+bars2 = ax2.bar(x, norm_df["recall"] * 100, color=bar_colors, width=0.5, edgecolor="white")
+ax2.set_xticks(x); ax2.set_xticklabels(variants, fontsize=11)
+ax2.set_ylabel("Recall (%)", fontsize=10)
+ax2.set_title("Fraud Detection Recall\n(higher is better)", fontsize=11, fontweight="bold")
+ax2.set_ylim(0, 105)
+ax2.grid(axis="y", alpha=0.3)
+for bar in bars2:
+    ax2.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5,
+             f'{bar.get_height():.1f}%', ha="center", va="bottom", fontsize=9, fontweight="bold")
+
+fig.suptitle("Champion vs Challenger — Side-by-Side Performance", fontsize=13, fontweight="bold")
+plt.tight_layout()
+plt.show()
+
+# COMMAND ----------
+
+# MAGIC %md
 # MAGIC ## 6. Save results and log to MLflow
 
 # COMMAND ----------
